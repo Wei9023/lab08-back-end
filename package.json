@@ -1,23 +1,19 @@
 {
-  "name": "lab08-back-end",
-  "version": "3.0.0",
-  "description": "**Author**: Andrew Curtis **Version**: 1.0.0 (increment the patch/fix version number if we make more commits past first submission)",
+  "name": "solution",
+  "version": "1.0.0",
+  "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Wei9023/lab08-back-end.git"
-  },
-  "author": "vanessa",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Wei9023/lab08-back-end/issues"
-  },
-  "homepage": "https://github.com/Wei9023/lab08-back-end#readme",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "pg": "^7.8.1"
+    "cors": "^2.8.5",
+    "dotenv": "^6.1.0",
+    "express": "^4.16.4",
+    "pg": "^7.8.0",
+    "superagent": "^4.0.0"
   }
 }
