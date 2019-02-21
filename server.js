@@ -35,7 +35,7 @@ app.get('/location', (request, response) => {
 app.get('/weather', getWeather);
 
 // Do not comment in until weather is working
-// app.get('/meetups', getMeetups);
+app.get('/meetups', getMeetups);
 
 // Make sure the server is listening for requests
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
@@ -56,14 +56,13 @@ function Weather(day) {
   this.time = new Date(day.time * 1000).toString().slice(0, 15);
 }
 
-// function Meetup(meetup) {
-//   this.tableName = 'meetups';
-//   this.link = meetup.link;
-//   this.name = meetup.group.name;
-//   this.creation_date = new Date(meetup.group.created).toString().slice(0, 15);
-//   this.host = meetup.group.who;
-//   this.created_at = Date.now();
-// }
+function Meetup(meetup) {
+  this.link = meetup.link;
+  this.name = meetup.group.name;
+  this.creation_date = new Date(meetup.group.created).toString().slice(0, 15);
+  this.host = meetup.group.who;
+ 
+}
 
 // *********************
 // HELPER FUNCTIONS
@@ -149,17 +148,17 @@ function getWeather(request, response) {
           return summary;
         });
         let newSQL = `INSERT INTO weathers(forecast, time, location_id) VALUES ($1, $2, $3);`;
-        console.log('148', weatherSummaries)//array of objects
+        // console.log('152', weatherSummaries)//array of objects
         weatherSummaries.forEach( summary => {
           let newValues = Object.values(summary);
           newValues.push(request.query.data.id);
           //Add the record to the database
           return client.query(newSQL, newValues)
             .then(result => {
-              console.log('155', result.rows);
+              // console.log('159', result.rows);
               //Attach the id of the newly created record to the instance of location.
               //This will be used to connect the location to the other databases.
-              console.log('158', result.rows[0].id)
+              // console.log('162', result.rows[0].id)
             })
             .catch(console.error);
         })
@@ -171,19 +170,48 @@ function getWeather(request, response) {
 }  
 
 
-// function getMeetups(request, response) {
-//       const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
-
-//       superagent.get(url)
-//         .then(result => {
-//           const meetups = result.body.events.map(meetup => {
-//             const event = new Meetup(meetup);
-//             return event;
-//           });
-
-//           response.send(meetups);
-//         })
-//         .catch(error => handleError(error, response));
-//     }
-//   })
+function getMeetups(request, response) {
+  //CREAT the query string to check for the existence of the location
+  const SQL = `SELECT * FROM meetups WHERE location_id=$1;`;
+  const values = [request.query.data.id];
+  
+  //Make the query of the database
+  return client.query(SQL, values)
+  .then(result => {
+    //check to see if the location was found and return the results
+    if (result.rowCount > 0) {
+      console.log('From SQL');
+      response.send(result.rows[0]);
+      //otherwise get the location information from DarkSky
+    } else {
+        const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
+        
+        superagent.get(url)
+        .then(result => {
+          const meetups = result.body.events.map(meetup => {
+            const event = new Meetup(meetup);
+            return event;
+          });
+          let newSQL = `INSERT INTO meetups(link, name, creation_date, host, location_id ) VALUES ($1, $2, $3, $4, $5);`;
+          
+          meetups.forEach( meet => {
+            let newValues = Object.values(meet);
+            newValues.push(request.query.data.id);
+            console.log('200', newValues)//array of meetup data
+            //Add the record to the database
+            return client.query(newSQL, newValues)
+              .then(result => {
+                console.log('204', result.rows);
+                //Attach the id of the newly created record to the instance of location.
+                //This will be used to connect the location to the other databases.
+                console.log('207', result.rows[0].id)
+              })
+              .catch(console.error);
+            })
+            response.send(meetups);
+          })
+      .catch(error => handleError(error, response));
+    }
+  })
+}
 
